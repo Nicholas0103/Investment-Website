@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investment Compound Growth Calculator</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Theme Color Variables */
+    :root {
+      --bg-main: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: rgba(0, 0, 0, 0.08);
+      --input-bg: #f8fafc;
+      --input-border: rgba(0, 0, 0, 0.12);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --sub-bg: #f8fafc;
+      --sub-border: rgba(0, 0, 0, 0.06);
+    }
+
+    html.dark {
+      --bg-main: #090d16;
+      --card-bg: rgba(30, 41, 59, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --input-bg: rgba(15, 23, 42, 0.7);
+      --input-border: rgba(255, 255, 255, 0.12);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --sub-bg: rgba(15, 23, 42, 0.5);
+      --sub-border: rgba(255, 255, 255, 0.06);
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    .app-card {
+      background-color: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
+    }
+    
+    .app-input {
+      background-color: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-main);
+    }
+    .app-input:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    
+    .sub-box {
+      background-color: var(--sub-bg);
+      border: 1px solid var(--sub-border);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.5); }
+  </style>
+</head>
+<body class="min-h-screen pb-12 pt-6 px-4 sm:px-6 lg:px-8">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Top Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 app-card p-6 rounded-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-extrabold tracking-tight">Investment Growth Planner</h1>
+          <p class="text-xs sm:text-sm opacity-75">Multi-Stage Contributions, Returns & Dividend Yield Tracker</p>
+        </div>
+      </div>
+      
+      <!-- Right Header Tools -->
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <i class="fa-solid fa-coins mr-1.5"></i> RM (MYR)
+        </span>
+        <!-- Theme Toggle Button -->
+        <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl sub-box flex items-center justify-center hover:scale-105 transition shadow-sm cursor-pointer" title="Toggle Light/Dark Theme">
+          <i id="themeIcon" class="fa-solid fa-sun text-sm text-amber-500"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Layout (Grid) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- LEFT COLUMN: Inputs (5 Cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Core Parameters Card -->
+        <div class="app-card p-6 rounded-2xl space-y-4">
+          <h2 class="text-base font-bold flex items-center gap-2 border-b border-current opacity-90 pb-3" style="border-opacity: 0.15;">
+            <i class="fa-solid fa-sliders text-emerald-500"></i> Core Investment Setup
+          </h2>
+
+          <!-- Starting Amount -->
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5 opacity-80">Starting Amount (RM)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sm font-bold opacity-60">RM</span>
+              <input type="number" id="startingAmount" value="10000" min="0" step="500" class="app-input w-full pl-11 pr-4 py-2.5 rounded-xl text-sm font-semibold transition" oninput="calculateInvestment()">
+            </div>
+          </div>
+
+          <!-- Investment Horizon -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="text-xs font-semibold uppercase tracking-wider opacity-80">Investment Horizon</label>
+              <div class="inline-flex rounded-lg sub-box p-0.5 border border-current" style="border-opacity: 0.1;">
+                <button type="button" id="unitYearsBtn" onclick="setHorizonUnit('years')" class="px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-500 text-slate-950 transition cursor-pointer">Years</button>
+                <button type="button" id="unitMonthsBtn" onclick="setHorizonUnit('months')" class="px-2.5 py-1 text-xs font-bold rounded-md opacity-70 hover:opacity-100 transition cursor-pointer">Months</button>
+              </div>
+            </div>
+            <div class="relative">
+              <input type="number" id="horizonValue" value="10" min="1" max="600" class="app-input w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition" oninput="calculateInvestment()">
+              <span id="horizonUnitLabel" class="absolute inset-y-0 right-0 pr-4 flex items-center text-xs font-medium opacity-60">Years</span>
+            </div>
+          </div>
+
+          <!-- Annual Return Rate (%) -->
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <label class="text-xs font-semibold uppercase tracking-wider opacity-80">Annual Return Rate (%)</label>
+              <span class="text-xs text-emerald-500 font-medium">Compound growth</span>
+            </div>
+            <div class="relative">
+              <input type="number" id="annualReturn" value="8.0" min="-20" max="50" step="0.25" class="app-input w-full pr-10 pl-4 py-2.5 rounded-xl text-sm font-semibold transition" oninput="calculateInvestment()">
+              <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-sm font-bold opacity-60">%</span>
+            </div>
+            <!-- Presets -->
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              <button onclick="setAnnualReturn(3.0)" class="text-[10px] px-2 py-1 sub-box hover:border-emerald-500 rounded-lg transition font-medium cursor-pointer">FD (3%)</button>
+              <button onclick="setAnnualReturn(6.0)" class="text-[10px] px-2 py-1 sub-box hover:border-emerald-500 rounded-lg transition font-medium cursor-pointer">Balanced (6%)</button>
+              <button onclick="setAnnualReturn(8.0)" class="text-[10px] px-2 py-1 sub-box hover:border-emerald-500 rounded-lg transition font-medium cursor-pointer">S&P 500 (8%)</button>
+              <button onclick="setAnnualReturn(10.0)" class="text-[10px] px-2 py-1 sub-box hover:border-emerald-500 rounded-lg transition font-medium cursor-pointer">Growth (10%)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dividend / Yield Card -->
+        <div class="app-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between border-b border-current pb-3" style="border-opacity: 0.15;">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="enableDividends" onchange="toggleDividendSection()" class="w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+              <label for="enableDividends" class="text-base font-bold cursor-pointer select-none">Include Dividend / Yield</label>
+            </div>
+            <i class="fa-solid fa-hand-holding-dollar text-emerald-500"></i>
+          </div>
+
+          <!-- Hidden/Collapsible Dividend Settings -->
+          <div id="dividendSettingsContainer" class="space-y-4 hidden pt-1">
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Dividend Yield -->
+              <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 opacity-80">Dividend Rate (%)</label>
+                <div class="relative">
+                  <input type="number" id="dividendRate" value="3.0" min="0" max="30" step="0.25" class="app-input w-full pr-8 pl-3 py-2 rounded-xl text-xs font-semibold" oninput="calculateInvestment()">
+                  <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs font-bold opacity-60">%</span>
+                </div>
+              </div>
+              <!-- Frequency -->
+              <div>
+                <label class="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 opacity-80">Frequency</label>
+                <select id="dividendFrequency" onchange="calculateInvestment()" class="app-input w-full px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer">
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="annually" selected>Annually</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Payout Action -->
+            <div>
+              <label class="block text-[11px] font-semibold uppercase tracking-wider mb-1.5 opacity-80">Dividend Strategy</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" id="dripBtn" onclick="setDividendAction('reinvest')" class="py-2 px-3 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 transition cursor-pointer">Reinvest (DRIP)</button>
+                <button type="button" id="cashBtn" onclick="setDividendAction('cash')" class="py-2 px-3 rounded-xl text-xs font-bold sub-box opacity-70 hover:opacity-100 transition cursor-pointer">Cash Payout</button>
+              </div>
+              <p class="text-[10px] opacity-60 mt-1.5" id="dividendHint">Reinvesting dividends automatically compounds your portfolio growth.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-Stage Monthly Contribution Schedule Card -->
+        <div class="app-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between border-b border-current pb-3" style="border-opacity: 0.15;">
+            <div>
+              <h2 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days text-emerald-500"></i> Monthly Contributions
+              </h2>
+              <p class="text-xs opacity-75 mt-0.5">Customize deposits over time</p>
+            </div>
+            <button onclick="addStage()" class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-plus text-xs"></i> Add Stage
+            </button>
+          </div>
+
+          <!-- Dynamic Stages Container -->
+          <div id="stagesContainer" class="space-y-3 max-h-56 overflow-y-auto pr-1">
+            <!-- Populated dynamically -->
+          </div>
+
+          <!-- Total Allocated Horizon Summary -->
+          <div class="p-3 rounded-xl sub-box text-xs flex items-center justify-between">
+            <span class="opacity-75">Schedule Duration:</span>
+            <span id="totalStagesDurationText" class="font-bold text-emerald-500">10 Years</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Visualizations & Output (7 Cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <!-- Metric Cards Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          
+          <!-- Final Balance -->
+          <div class="app-card p-4 rounded-2xl border-l-4 border-l-emerald-500 space-y-1">
+            <span class="text-[11px] font-bold opacity-75 uppercase tracking-wider">Future Balance</span>
+            <div id="metricTotalValue" class="text-base sm:text-lg font-extrabold truncate">RM 0</div>
+            <span class="text-[10px] text-emerald-500 font-semibold block">Total Portfolio</span>
+          </div>
+
+          <!-- Total Principal -->
+          <div class="app-card p-4 rounded-2xl border-l-4 border-l-sky-500 space-y-1">
+            <span class="text-[11px] font-bold opacity-75 uppercase tracking-wider">Total Invested</span>
+            <div id="metricTotalInvested" class="text-base sm:text-lg font-extrabold truncate">RM 0</div>
+            <span class="text-[10px] text-sky-500 font-semibold block">Principal Paid In</span>
+          </div>
+
+          <!-- Interest Earned -->
+          <div class="app-card p-4 rounded-2xl border-l-4 border-l-teal-500 space-y-1">
+            <span class="text-[11px] font-bold opacity-75 uppercase tracking-wider">Growth / Yield</span>
+            <div id="metricTotalInterest" class="text-base sm:text-lg font-extrabold truncate">RM 0</div>
+            <span class="text-[10px] text-teal-500 font-semibold block">Gains & Dividends</span>
+          </div>
+
+          <!-- ROI -->
+          <div class="app-card p-4 rounded-2xl border-l-4 border-l-purple-500 space-y-1">
+            <span class="text-[11px] font-bold opacity-75 uppercase tracking-wider">Total Return</span>
+            <div id="metricROI" class="text-base sm:text-lg font-extrabold truncate">0%</div>
+            <span class="text-[10px] text-purple-500 font-semibold block">Net Gain Ratio</span>
+          </div>
+
+        </div>
+
+        <!-- Interactive Chart Card -->
+        <div class="app-card p-6 rounded-2xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold flex items-center gap-2">
+              <i class="fa-solid fa-chart-area text-emerald-500"></i> Growth Trajectory
+            </h3>
+            <div class="flex items-center gap-4 text-xs font-semibold">
+              <span class="flex items-center gap-1.5 text-sky-500"><span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span> Principal</span>
+              <span class="flex items-center gap-1.5 text-emerald-500"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Portfolio</span>
+            </div>
+          </div>
+          <div class="relative h-64 w-full">
+            <canvas id="growthChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Schedule Breakdown Table Card -->
+        <div class="app-card p-6 rounded-2xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 class="text-base font-bold flex items-center gap-2">
+              <i class="fa-solid fa-table-list text-emerald-500"></i> Schedule Breakdown
+            </h3>
+            <div class="flex items-center gap-2">
+              <!-- Mode Toggle -->
+              <div class="inline-flex rounded-lg sub-box p-0.5 border border-current" style="border-opacity: 0.1;">
+                <button type="button" id="viewYearlyBtn" onclick="setTableViewMode('yearly')" class="px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-500 text-slate-950 transition cursor-pointer">Yearly</button>
+                <button type="button" id="viewMonthlyBtn" onclick="setTableViewMode('monthly')" class="px-2.5 py-1 text-xs font-bold rounded-md opacity-70 hover:opacity-100 transition cursor-pointer">Monthly</button>
+              </div>
+              <!-- CSV Export -->
+              <button onclick="exportToCSV()" class="px-3 py-1 sub-box hover:border-emerald-500 rounded-lg text-xs font-semibold transition flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-download text-xs"></i> CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="overflow-x-auto max-h-72 rounded-xl border border-current" style="border-opacity: 0.1;">
+            <table class="w-full text-left text-xs">
+              <thead class="font-semibold sticky top-0" style="background-color: var(--sub-bg); color: var(--text-muted);">
+                <tr>
+                  <th id="periodColHeader" class="py-2.5 px-4">Year</th>
+                  <th class="py-2.5 px-4">Monthly Deposit</th>
+                  <th class="py-2.5 px-4">Total Invested</th>
+                  <th class="py-2.5 px-4">Gains / Dividends</th>
+                  <th class="py-2.5 px-4 text-right">End Balance</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleTableBody" class="divide-y divide-current" style="divide-opacity: 0.08;">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // State Variables
+    let horizonUnit = 'years';
+    let tableViewMode = 'yearly';
+    let dividendAction = 'reinvest';
+    let chartInstance = null;
+    let computedData = [];
+
+    let stages = [
+      { duration: 3, durationUnit: 'years', monthlyAmount: 500 },
+      { duration: 7, durationUnit: 'years', monthlyAmount: 1000 }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderStageRows();
+      calculateInvestment();
+    });
+
+    // Theme Toggle Function
+    function toggleTheme() {
+      const htmlEl = document.documentElement;
+      const themeIcon = document.getElementById('themeIcon');
+      
+      if (htmlEl.classList.contains('dark')) {
+        htmlEl.classList.remove('dark');
+        themeIcon.className = "fa-solid fa-moon text-sm text-slate-700";
+      } else {
+        htmlEl.classList.add('dark');
+        themeIcon.className = "fa-solid fa-sun text-sm text-amber-500";
+      }
+      if (chartInstance) renderChart();
+    }
+
+    function toggleDividendSection() {
+      const isChecked = document.getElementById('enableDividends').checked;
+      const container = document.getElementById('dividendSettingsContainer');
+      if (isChecked) {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+      }
+      calculateInvestment();
+    }
+
+    function setDividendAction(action) {
+      dividendAction = action;
+      const dripBtn = document.getElementById('dripBtn');
+      const cashBtn = document.getElementById('cashBtn');
+      const hint = document.getElementById('dividendHint');
+
+      if (action === 'reinvest') {
+        dripBtn.className = "py-2 px-3 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 transition cursor-pointer";
+        cashBtn.className = "py-2 px-3 rounded-xl text-xs font-bold sub-box opacity-70 hover:opacity-100 transition cursor-pointer";
+        hint.textContent = "Reinvesting dividends automatically compounds your portfolio growth.";
+      } else {
+        cashBtn.className = "py-2 px-3 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 transition cursor-pointer";
+        dripBtn.className = "py-2 px-3 rounded-xl text-xs font-bold sub-box opacity-70 hover:opacity-100 transition cursor-pointer";
+        hint.textContent = "Dividends are paid out as cash and do not compound into the balance.";
+      }
+      calculateInvestment();
+    }
+
+    function setHorizonUnit(unit) {
+      horizonUnit = unit;
+      const yearsBtn = document.getElementById('unitYearsBtn');
+      const monthsBtn = document.getElementById('unitMonthsBtn');
+      const unitLabel = document.getElementById('horizonUnitLabel');
+      const input = document.getElementById('horizonValue');
+
+      if (unit === 'years') {
+        yearsBtn.className = "px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-500 text-slate-950 transition cursor-pointer";
+        monthsBtn.className = "px-2.5 py-1 text-xs font-bold rounded-md opacity-70 hover:opacity-100 transition cursor-pointer";
+        unitLabel.textContent = "Years";
+        input.value = Math.max(1, Math.round(parseFloat(input.value) / 12) || 10);
+      } else {
+        monthsBtn.className = "px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-500 text-slate-950 transition cursor-pointer";
+        yearsBtn.className = "px-2.5 py-1 text-xs font-bold rounded-md opacity-70 hover:opacity-100 transition cursor-pointer";
+        unitLabel.textContent = "Months";
+        input.value = Math.max(1, Math.round(parseFloat(input.value) * 12) || 120);
+      }
+      calculateInvestment();
+    }
+
+    function setTableViewMode(mode) {
+      tableViewMode = mode;
+      const yearlyBtn = document.getElementById('viewYearlyBtn');
+      const monthlyBtn = document.getElementById('viewMonthlyBtn');
+      const colHeader = document.getElementById('periodColHeader');
+
+      if (mode === 'yearly') {
+        yearlyBtn.className = "px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-500 text-slate-950 transition cursor-pointer";
+        monthlyBtn.className = "px-2.5 py-1 text-xs font-bold rounded-md opacity-70 hover:opacity-100 transition cursor-pointer";
+        colHeader.textContent = "Year";
+      } else {
+        monthlyBtn.className = "px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-500 text-slate-950 transition cursor-pointer";
+        yearlyBtn.className = "px-2.5 py-1 text-xs font-bold rounded-md opacity-70 hover:opacity-100 transition cursor-pointer";
+        colHeader.textContent = "Month";
+      }
+      renderScheduleTable();
+    }
+
+    function setAnnualReturn(val) {
+      document.getElementById('annualReturn').value = val;
+      calculateInvestment();
+    }
+
+    function renderStageRows() {
+      const container = document.getElementById('stagesContainer');
+      container.innerHTML = '';
+
+      stages.forEach((stage, idx) => {
+        const row = document.createElement('div');
+        row.className = "p-3 rounded-xl sub-box space-y-2 transition";
+        row.innerHTML = `
+          <div class="flex items-center justify-between text-xs font-semibold opacity-80">
+            <span>Stage ${idx + 1}</span>
+            ${stages.length > 1 ? `
+              <button onclick="removeStage(${idx})" class="opacity-60 hover:text-rose-500 transition text-xs cursor-pointer">
+                <i class="fa-solid fa-trash-can"></i> Remove
+              </button>
+            ` : ''}
+          </div>
+          <div class="grid grid-cols-12 gap-2">
+            <div class="col-span-5 relative">
+              <input type="number" min="1" value="${stage.duration}" onchange="updateStage(${idx}, 'duration', this.value)" class="app-input w-full px-3 py-1.5 rounded-lg text-xs font-semibold">
+              <select onchange="updateStage(${idx}, 'durationUnit', this.value)" class="absolute right-1 top-1/2 -translate-y-1/2 app-input text-[10px] font-bold rounded px-1.5 py-0.5 cursor-pointer">
+                <option value="years" ${stage.durationUnit === 'years' ? 'selected' : ''}>Yrs</option>
+                <option value="months" ${stage.durationUnit === 'months' ? 'selected' : ''}>Mos</option>
+              </select>
+            </div>
+            <div class="col-span-7 relative">
+              <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-xs font-bold opacity-60">RM</span>
+              <input type="number" min="0" step="100" value="${stage.monthlyAmount}" onchange="updateStage(${idx}, 'monthlyAmount', this.value)" class="app-input w-full pl-9 pr-3 py-1.5 rounded-lg text-xs font-semibold">
+              <span class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-[10px] opacity-60">/ mo</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      updateTotalStagesDurationText();
+    }
+
+    function addStage() {
+      stages.push({ duration: 2, durationUnit: 'years', monthlyAmount: 1000 });
+      renderStageRows();
+      calculateInvestment();
+    }
+
+    function removeStage(index) {
+      if (stages.length > 1) {
+        stages.splice(index, 1);
+        renderStageRows();
+        calculateInvestment();
+      }
+    }
+
+    function updateStage(index, field, value) {
+      if (field === 'duration' || field === 'monthlyAmount') {
+        stages[index][field] = Math.max(0, parseFloat(value) || 0);
+      } else {
+        stages[index][field] = value;
+      }
+      updateTotalStagesDurationText();
+      calculateInvestment();
+    }
+
+    function updateTotalStagesDurationText() {
+      let totalMos = 0;
+      stages.forEach(s => {
+        totalMos += s.durationUnit === 'years' ? s.duration * 12 : s.duration;
+      });
+      const yrs = (totalMos / 12).toFixed(1).replace(/\.0$/, '');
+      document.getElementById('totalStagesDurationText').textContent = `${totalMos} Months (${yrs} Years)`;
+    }
+
+    function calculateInvestment() {
+      const startingAmount = parseFloat(document.getElementById('startingAmount').value) || 0;
+      const horizonVal = parseFloat(document.getElementById('horizonValue').value) || 1;
+      const totalMonths = horizonUnit === 'years' ? Math.round(horizonVal * 12) : Math.round(horizonVal);
+      
+      const annualReturnPct = parseFloat(document.getElementById('annualReturn').value) || 0;
+      const monthlyRate = Math.pow(1 + (annualReturnPct / 100), 1 / 12) - 1;
+
+      const hasDividends = document.getElementById('enableDividends').checked;
+      const annualDivPct = hasDividends ? (parseFloat(document.getElementById('dividendRate').value) || 0) / 100 : 0;
+      const divFrequency = document.getElementById('dividendFrequency').value;
+
+      let stageConfigs = stages.map(s => ({
+        months: s.durationUnit === 'years' ? Math.round(s.duration * 12) : Math.round(s.duration),
+        amount: s.monthlyAmount
+      }));
+
+      let currentBalance = startingAmount;
+      let totalInvested = startingAmount;
+      let totalDividendsCollected = 0;
+      computedData = [];
+
+      let currentStageIdx = 0;
+      let currentStageMonthCounter = 0;
+
+      for (let month = 1; month <= totalMonths; month++) {
+        let currentContribution = 0;
+        if (stageConfigs.length > 0) {
+          if (currentStageIdx < stageConfigs.length) {
+            currentContribution = stageConfigs[currentStageIdx].amount;
+            currentStageMonthCounter++;
+            if (currentStageMonthCounter >= stageConfigs[currentStageIdx].months && currentStageIdx < stageConfigs.length - 1) {
+              currentStageIdx++;
+              currentStageMonthCounter = 0;
+            }
+          } else {
+            currentContribution = stageConfigs[stageConfigs.length - 1].amount;
+          }
+        }
+
+        let interestEarned = currentBalance * monthlyRate;
+        currentBalance += interestEarned + currentContribution;
+        totalInvested += currentContribution;
+
+        let monthDividend = 0;
+        if (hasDividends && annualDivPct > 0) {
+          let isPayoutMonth = false;
+          if (divFrequency === 'monthly') isPayoutMonth = true;
+          else if (divFrequency === 'quarterly' && month % 3 === 0) isPayoutMonth = true;
+          else if (divFrequency === 'annually' && month % 12 === 0) isPayoutMonth = true;
+
+          if (isPayoutMonth) {
+            let divisor = divFrequency === 'monthly' ? 12 : (divFrequency === 'quarterly' ? 4 : 1);
+            monthDividend = currentBalance * (annualDivPct / divisor);
+            totalDividendsCollected += monthDividend;
+
+            if (dividendAction === 'reinvest') {
+              currentBalance += monthDividend;
+            }
+          }
+        }
+
+        computedData.push({
+          month: month,
+          year: Math.ceil(month / 12),
+          monthlyContribution: currentContribution,
+          totalInvested: totalInvested,
+          dividendEarned: monthDividend,
+          totalDividends: totalDividendsCollected,
+          interestEarnedTotal: currentBalance - totalInvested,
+          balance: currentBalance
+        });
+      }
+
+      const finalBalance = currentBalance;
+      const totalGains = finalBalance - totalInvested;
+      const roi = totalInvested > 0 ? ((totalGains / totalInvested) * 100) : 0;
+
+      document.getElementById('metricTotalValue').textContent = formatRM(finalBalance);
+      document.getElementById('metricTotalInvested').textContent = formatRM(totalInvested);
+      document.getElementById('metricTotalInterest').textContent = formatRM(totalGains);
+      document.getElementById('metricROI').textContent = `${roi.toFixed(1)}%`;
+
+      renderChart();
+      renderScheduleTable();
+    }
+
+    function formatRM(val) {
+      return 'RM ' + Math.round(val).toLocaleString('en-US');
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('growthChart').getContext('2d');
+      const step = computedData.length > 60 ? 12 : (computedData.length > 24 ? 6 : 1);
+      
+      const chartLabels = [];
+      const investedData = [];
+      const balanceData = [];
+
+      const startAmt = parseFloat(document.getElementById('startingAmount').value) || 0;
+      chartLabels.push('Start');
+      investedData.push(startAmt);
+      balanceData.push(startAmt);
+
+      computedData.forEach((d, idx) => {
+        if ((idx + 1) % step === 0 || idx === computedData.length - 1) {
+          chartLabels.push(horizonUnit === 'years' ? `Yr ${d.year}` : `Mo ${d.month}`);
+          investedData.push(Math.round(d.totalInvested));
+          balanceData.push(Math.round(d.balance));
+        }
+      });
+
+      if (chartInstance) chartInstance.destroy();
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gradientBalance = ctx.createLinearGradient(0, 0, 0, 250);
+      gradientBalance.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+      gradientBalance.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+      const gradientInvested = ctx.createLinearGradient(0, 0, 0, 250);
+      gradientInvested.addColorStop(0, 'rgba(56, 189, 248, 0.3)');
+      gradientInvested.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartLabels,
+          datasets: [
+            {
+              label: 'Total Balance (RM)',
+              data: balanceData,
+              borderColor: '#10b981',
+              borderWidth: 2.5,
+              backgroundColor: gradientBalance,
+              fill: true,
+              tension: 0.35,
+              pointRadius: computedData.length > 60 ? 0 : 3,
+            },
+            {
+              label: 'Principal Invested (RM)',
+              data: investedData,
+              borderColor: '#38bdf8',
+              borderWidth: 2,
+              backgroundColor: gradientInvested,
+              fill: true,
+              tension: 0.2,
+              pointRadius: computedData.length > 60 ? 0 : 2,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.95)',
+              titleColor: isDark ? '#f8fafc' : '#0f172a',
+              bodyColor: isDark ? '#cbd5e1' : '#334155',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.dataset.label}: ${formatRM(context.parsed.y)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+              ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 10 } }
+            },
+            y: {
+              grid: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+              ticks: {
+                color: isDark ? '#94a3b8' : '#64748b',
+                font: { size: 10 },
+                callback: function(value) {
+                  if (value >= 1000000) return 'RM ' + (value/1000000).toFixed(1) + 'M';
+                  if (value >= 1000) return 'RM ' + (value/1000).toFixed(0) + 'k';
+                  return 'RM ' + value;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderScheduleTable() {
+      const tbody = document.getElementById('scheduleTableBody');
+      tbody.innerHTML = '';
+
+      if (computedData.length === 0) return;
+
+      if (tableViewMode === 'monthly') {
+        computedData.forEach(d => {
+          const tr = document.createElement('tr');
+          tr.className = "hover:opacity-80 transition";
+          tr.innerHTML = `
+            <td class="py-2 px-4 font-semibold opacity-70">Mo ${d.month}</td>
+            <td class="py-2 px-4">${formatRM(d.monthlyContribution)}</td>
+            <td class="py-2 px-4 text-sky-500">${formatRM(d.totalInvested)}</td>
+            <td class="py-2 px-4 text-teal-500">${formatRM(d.interestEarnedTotal)}</td>
+            <td class="py-2 px-4 text-right font-bold text-emerald-500">${formatRM(d.balance)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } else {
+        let currentYear = 1;
+        computedData.forEach(d => {
+          if (d.month % 12 === 0 || d.month === computedData.length) {
+            const tr = document.createElement('tr');
+            tr.className = "hover:opacity-80 transition";
+            tr.innerHTML = `
+              <td class="py-2.5 px-4 font-bold">Year ${d.year}</td>
+              <td class="py-2.5 px-4">${formatRM(d.monthlyContribution)}/mo</td>
+              <td class="py-2.5 px-4 text-sky-500 font-medium">${formatRM(d.totalInvested)}</td>
+              <td class="py-2.5 px-4 text-teal-500 font-medium">${formatRM(d.interestEarnedTotal)}</td>
+              <td class="py-2.5 px-4 text-right font-bold text-emerald-500">${formatRM(d.balance)}</td>
+            `;
+            tbody.appendChild(tr);
+            currentYear++;
+          }
+        });
+      }
+    }
+
+    function exportToCSV() {
+      if (!computedData.length) return;
+
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Month,Year,Monthly Contribution (RM),Total Invested (RM),Dividend Earned (RM),Total Dividends (RM),Interest Earned (RM),Total Balance (RM)\n";
+
+      computedData.forEach(d => {
+        csvContent += `${d.month},${d.year},${d.monthlyContribution.toFixed(2)},${d.totalInvested.toFixed(2)},${d.dividendEarned.toFixed(2)},${d.totalDividends.toFixed(2)},${d.interestEarnedTotal.toFixed(2)},${d.balance.toFixed(2)}\n`;
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "investment_schedule_with_dividends.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
